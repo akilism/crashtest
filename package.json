@@ -3,11 +3,13 @@
   "version": "0.0.1",
   "description": "A dummy JSON data generator",
   "private": false,
-  "author": "Akil Harris"
+  "author": "Akil Harris",
   "engines": {
-      "node": "0.10.x",
-      "npm":  "1.2.x"
-    },
-  "dependencies": {},
+    "node": "0.10.x",
+    "npm": "1.2.x"
+  },
+  "dependencies": {
+    "q": "~1.0.0"
+  },
   "devDependencies": {}
 }
