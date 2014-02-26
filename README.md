@@ -17,3 +17,5 @@ run from the command line.
 node crashtest.js
 
 
+Still in development...
+generation of .json file is working and generation of config.json template on save.
