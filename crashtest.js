@@ -48,8 +48,6 @@ var crashtest = function () {
   }
 
   var mainMenu = function () {
-    //TODO check if build exists. If not use build else make an array to hold multiple builds.
-    //TODO add functionality to save / print from multiple builds.
     prompt.message = '';
     prompt.delimiter = '';
     prompt.start();
@@ -90,7 +88,7 @@ var crashtest = function () {
           displayHelp();
           d.resolve(false);
           break;
-        case 'p':  //TODO don't crash on empty build.
+        case 'p':
           rain();
           console.log('Obj Print-out:', build);
           console.log('JSON Print-out:', generatedJSON);
@@ -105,7 +103,6 @@ var crashtest = function () {
           save().then(function (filename) {
             console.log('Saved: ' + filename + '.json');
             console.log('Saved: ' + filename + '.config.json');
-            //TODO Build save menu.
             d.resolve(false);
           });
           break;
@@ -502,7 +499,6 @@ var crashtest = function () {
   var writeFiles = function (filename) {
     var deferred = Q.defer();
 
-    //TODO write this properly.
     fs.writeFile('output/' + filename + '.json', generatedJSON + '\n', function(error) {
       if(error) { console.error(error) };
       deferred.resolve(filename);
