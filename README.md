@@ -13,9 +13,9 @@ Crashtest
 A dummy JSON data generator.
 
 run from the command line.
+```
+chmod +x crashtest.js
+./crashtest.js
+```
 
-node crashtest.js
-
-
-Still in development...
-generation of .json file is working and generation of config.json template on save.
+Still in development. Generates JSON and Template Config files. Not working for strings perfectly yet but all other valid JSON data types are fine.
