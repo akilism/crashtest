@@ -9,7 +9,8 @@
     "npm": "1.2.x"
   },
   "dependencies": {
-    "q": "~1.0.0"
+    "q": "~1.0.0",
+    "prompt": "~0.2.12"
   },
   "devDependencies": {}
 }
