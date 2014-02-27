@@ -77,7 +77,7 @@ var crashtest = function () {
           d.resolve(false);
           break;
         case 'b':
-          buildObject().then(function (obj) {
+          buildObject(false).then(function (obj) {
             build = obj;
             generatedJSON = JSON.stringify(generator.generate(build));
             rain();
@@ -139,45 +139,88 @@ var crashtest = function () {
       console.log('Sorry I can\'t right now. \n');
   };
 
-  var buildObject = function () {
+  var buildObject = function (isNested) {
     var properties = [];
+    var obj = {};
     var deferred = Q.defer();
 
-    var objectPrompt = {
-      properties: {
-        option: {
-          description: 'Number of properties:',
-          before: function (value) { return parseInt(value, 10); }
+    var buildName = function () {
+      var d = Q.defer();
+
+      var namePrompt = {
+        properties: {
+          name: {
+            description: 'Object name:'
+          }
         }
-      }
+      };
+
+      prompt.get(namePrompt, function (err, result) {
+        d.resolve(result.name);
+      });
+
+      return d.promise;
     };
 
-    prompt.get(objectPrompt, function (err, result){
-      console.log('Building ' + result.option + ' ' + ((result.option === 1) ? 'property' : 'properties'));
-
-      var propertyManager = function () {
-        buildProperties().then(function (property) {
-          properties.push(property);
-          if (properties.length === result.option) {
-            deferred.resolve(properties);
-          } else {
-            propertyManager();
+    var buildCountProperties = function () {
+      var d = Q.defer();
+      var objectPrompt = {
+        properties: {
+          option: {
+            description: 'Number of properties:',
+            before: function (value) { return parseInt(value, 10); }
           }
-        });
+        }
       };
 
-      var buildProperties = function () {
-        var d = Q.defer();
-        buildProperty().then(function (property) {
-          d.resolve(property);
-        });
-        return d.promise;
-      };
+      //      if(isNaN(option)) {
+      //      } else if (option > config.MAX_PROPERTY_COUNT) {
+      prompt.get(objectPrompt, function (err, result){
+        console.log('Building ' + result.option + ' ' + ((result.option === 1) ? 'property' : 'properties'));
+        return d.resolve(result.option);
+      });
 
-      propertyManager();
-    });
-//      if(isNaN(option)) {
-//      } else if (option > config.MAX_PROPERTY_COUNT) {
+      return d.promise;
+    };
+
+    var propertyManager = function (len) {
+      buildProperties().then(function (property) {
+        properties.push(property);
+        if (properties.length === len) {
+          if(isNested) {
+            obj.properties = properties;
+            deferred.resolve(obj);
+          } else {
+            deferred.resolve(properties);
+          }
+        } else {
+          propertyManager(len);
+        }
+      });
+    };
+
+    var buildProperties = function () {
+      var d = Q.defer();
+      buildProperty().then(function (property) {
+        d.resolve(property);
+      });
+      return d.promise;
+    };
+
+    if(isNested) {
+      buildName()
+        .then(function (name) {
+          obj.name = name;
+          return buildCountProperties();
+        }).then(function (len) {
+          return propertyManager(len);
+        });
+    } else {
+      buildCountProperties()
+        .then(function (len) {
+          return propertyManager(len);
+        });
+    }
 
     return deferred.promise;
   };
@@ -278,7 +321,7 @@ var crashtest = function () {
         return promptNumber();
         break;
       case config.TYPES.OBJECT:
-        return buildObject();
+        return buildObject(true);
         break;
       case config.TYPES.STRING:
         return promptString();
@@ -420,7 +463,7 @@ var crashtest = function () {
       var typePrompt = {
         properties: {
           type: {
-            description: 'String valid characters [\'array\',\'format\']:'
+            description: 'String valid characters ' + 'comma, separated, values'.green + ':'
           }
         }
       };
