@@ -17,13 +17,13 @@
 
 var crashtest = function () {
 
-  var build = {},
-    generator = require('./lib/crashtestGenerator'),
+  var generator = require('./lib/crashtestGenerator'),
     config = require('./lib/crashtestConfig').getConfig(),
     Q = require('Q'),
     prompt = require('prompt'),
     fs = require('fs'),
-    generatedJSON;
+    generatedJSON,
+    build;
 
   var run = function (showWelcome) {
     if(showWelcome) {
@@ -77,7 +77,8 @@ var crashtest = function () {
           d.resolve(false);
           break;
         case 'b':
-          buildObject(false).then(function (obj) {
+          build = {};
+          buildObject().then(function (obj) {
             build = obj;
             generatedJSON = JSON.stringify(generator.generate(build));
             rain();
@@ -139,28 +140,9 @@ var crashtest = function () {
       console.log('Sorry I can\'t right now. \n');
   };
 
-  var buildObject = function (isNested) {
+  var buildObject = function () {
     var properties = [];
-    var obj = {};
     var deferred = Q.defer();
-
-    var buildName = function () {
-      var d = Q.defer();
-
-      var namePrompt = {
-        properties: {
-          name: {
-            description: 'Object name:'
-          }
-        }
-      };
-
-      prompt.get(namePrompt, function (err, result) {
-        d.resolve(result.name);
-      });
-
-      return d.promise;
-    };
 
     var buildCountProperties = function () {
       var d = Q.defer();
@@ -187,12 +169,7 @@ var crashtest = function () {
       buildProperties().then(function (property) {
         properties.push(property);
         if (properties.length === len) {
-          if(isNested) {
-            obj.properties = properties;
-            deferred.resolve(obj);
-          } else {
-            deferred.resolve(properties);
-          }
+          deferred.resolve(properties);
         } else {
           propertyManager(len);
         }
@@ -207,20 +184,10 @@ var crashtest = function () {
       return d.promise;
     };
 
-    if(isNested) {
-      buildName()
-        .then(function (name) {
-          obj.name = name;
-          return buildCountProperties();
-        }).then(function (len) {
-          return propertyManager(len);
-        });
-    } else {
-      buildCountProperties()
-        .then(function (len) {
-          return propertyManager(len);
-        });
-    }
+    buildCountProperties()
+    .then(function (len) {
+      return propertyManager(len);
+    });
 
     return deferred.promise;
   };
@@ -321,7 +288,7 @@ var crashtest = function () {
         return promptNumber();
         break;
       case config.TYPES.OBJECT:
-        return buildObject(true);
+        return buildObject();
         break;
       case config.TYPES.STRING:
         return promptString();
