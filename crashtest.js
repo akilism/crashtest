@@ -17,13 +17,13 @@
 
 var crashtest = function () {
 
-  var build = {},
-    generator = require('./lib/crashtestGenerator'),
+  var generator = require('./lib/crashtestGenerator'),
     config = require('./lib/crashtestConfig').getConfig(),
     Q = require('Q'),
     prompt = require('prompt'),
     fs = require('fs'),
-    generatedJSON;
+    generatedJSON,
+    build;
 
   var run = function (showWelcome) {
     if(showWelcome) {
@@ -77,6 +77,7 @@ var crashtest = function () {
           d.resolve(false);
           break;
         case 'b':
+          build = {};
           buildObject().then(function (obj) {
             build = obj;
             generatedJSON = JSON.stringify(generator.generate(build));
@@ -143,41 +144,50 @@ var crashtest = function () {
     var properties = [];
     var deferred = Q.defer();
 
-    var objectPrompt = {
-      properties: {
-        option: {
-          description: 'Number of properties:',
-          before: function (value) { return parseInt(value, 10); }
+    var buildCountProperties = function () {
+      var d = Q.defer();
+      var objectPrompt = {
+        properties: {
+          option: {
+            description: 'Number of properties:',
+            before: function (value) { return parseInt(value, 10); }
+          }
         }
-      }
+      };
+
+      //      if(isNaN(option)) {
+      //      } else if (option > config.MAX_PROPERTY_COUNT) {
+      prompt.get(objectPrompt, function (err, result){
+        console.log('Building ' + result.option + ' ' + ((result.option === 1) ? 'property' : 'properties'));
+        return d.resolve(result.option);
+      });
+
+      return d.promise;
     };
 
-    prompt.get(objectPrompt, function (err, result){
-      console.log('Building ' + result.option + ' ' + ((result.option === 1) ? 'property' : 'properties'));
+    var propertyManager = function (len) {
+      buildProperties().then(function (property) {
+        properties.push(property);
+        if (properties.length === len) {
+          deferred.resolve(properties);
+        } else {
+          propertyManager(len);
+        }
+      });
+    };
 
-      var propertyManager = function () {
-        buildProperties().then(function (property) {
-          properties.push(property);
-          if (properties.length === result.option) {
-            deferred.resolve(properties);
-          } else {
-            propertyManager();
-          }
-        });
-      };
+    var buildProperties = function () {
+      var d = Q.defer();
+      buildProperty().then(function (property) {
+        d.resolve(property);
+      });
+      return d.promise;
+    };
 
-      var buildProperties = function () {
-        var d = Q.defer();
-        buildProperty().then(function (property) {
-          d.resolve(property);
-        });
-        return d.promise;
-      };
-
-      propertyManager();
+    buildCountProperties()
+    .then(function (len) {
+      return propertyManager(len);
     });
-//      if(isNaN(option)) {
-//      } else if (option > config.MAX_PROPERTY_COUNT) {
 
     return deferred.promise;
   };
@@ -420,7 +430,7 @@ var crashtest = function () {
       var typePrompt = {
         properties: {
           type: {
-            description: 'String valid characters [\'array\',\'format\']:'
+            description: 'String valid characters ' + 'comma, separated, values'.green + ':'
           }
         }
       };
