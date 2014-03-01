@@ -534,6 +534,5 @@ var crashtest = function () {
   };
 }();
 
-var ct = crashtest;
-ct.run(true);
+crashtest.run(true);
 
